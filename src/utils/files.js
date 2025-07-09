@@ -1,0 +1,78 @@
+import stream from "node:stream";
+import ftp from "basic-ftp";
+import config from "../config/constants/indes.js";
+
+const ftpServer = {
+	host: config.FTP_HOST,
+	user: config.FTP_USER,
+	password: config.FTP_PASSWORD,
+	port: config.FTP_PORT,
+	secure: false, // o true para FTPS
+	passive: true, // ¡Activa el modo pasivo!
+};
+
+const url = {
+	publicBaseUrl: config.PUBLIC_URL,
+	privateBaseUrl: config.PRIVATE_URL,
+};
+
+const uploadFile = async (file, path) => {
+	const client = new ftp.Client();
+	let newpath = path;
+	if (newpath.length > 0) {
+		if (newpath[0] === "/") {
+			newpath = newpath.substring(1);
+		}
+	}
+	const name = file?.originalname.replaceAll(" ", "_");
+
+	try {
+		let dir = "";
+		// crea la conexion al servidor FTP
+		await client.access({
+			...ftpServer,
+		});
+		// crea la carpeta si no existe
+		await client.ensureDir(`${url.privateBaseUrl}/${newpath}`);
+		dir = `${url.privateBaseUrl}/${newpath}`;
+
+		// convierte el archivo en stream
+		const readableStream = stream.Readable.from(file?.buffer);
+
+		// sube el archivo al servidor FTP
+		await client.uploadFrom(readableStream, `${dir}/${name}`);
+	} catch (error) {
+		console.error("Error al subir archivo");
+		console.error(error);
+		client.close();
+		return {
+			state: "error",
+			file: `${file.originalname}`,
+		};
+	}
+	client.close();
+	return {
+		state: "success",
+		file: `${file.originalname}`,
+		path: `${url.publicBaseUrl}${newpath}/${name}`,
+	};
+};
+
+const deleteFile = async (idFile, file, type, idActa, userDNI) => {
+	const client = new ftp.Client();
+	try {
+		await client.access({
+			...ftpServer,
+		});
+
+		//await client.remove(`${defaltUrl}/fotos/${file}`);
+	} catch (error) {
+		console.error("Error al borrar archivo");
+		console.error(error);
+		return { state: "error", file: file };
+	}
+	client.close();
+	return { state: "success", file: file };
+};
+
+export default { uploadFile, deleteFile };

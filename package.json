@@ -1,0 +1,23 @@
+{
+  "name": "saas-api",
+  "description": "API para micro-servicios",
+  "version": "0.0.1",
+  "main": "index.js",
+  "type": "module",
+  "keywords": [],
+  "author": "NotFoundSN",
+  "license": "ISC",
+  "scripts": {
+    "start": "node --env-file=.env ./src/app.js",
+    "dev": "node --env-file=.env --watch ./src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "basic-ftp": "^5.0.5",
+    "express": "^4.21.2",
+    "multer": "^2.0.1",
+    "pg": "^8.16.3",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.7"
+  }
+}
