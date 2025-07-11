@@ -1,26 +1,63 @@
 import { Router } from "express";
-import files from "../utils/files.js"
+import files from "../utils/files.js";
+import config from "../config/constants/indes.js";
 
 const router = Router();
 
-router.get("/", (req,res) => {
-    console.log(req.folder);
-    console.log("hola mundo")
+router.post("/", async (req, res) => {
+	if (req.files.length == 0) {
+		return res.status(400).json({ error: "No files uploaded" });
+	}
+	if (!req?.body?.path) {
+		req.body.path = req.folder;
+	} else {
+		req.body.path = `${req.folder}/${req.body.path}`;
+	}
+	try {
+		let temp = await files.uploadFile(req.files[0], req.body.path);
+		if (temp.state == "success") {
+			return res.status(200).json(temp);
+		} else {
+			return res.status(400).json(temp);
+		}
+	} catch (error) {
+		console.log(error);
+		return res.status(500).json({ error: "Internal server error" });
+	}
 });
-router.post("/", async (req,res) => {
-    console.log(req.folder);
-    console.log(req.files);
-    console.log(req.body.path);
-    console.log(req.body.name);
-    let temp = await files.uploadFile(req.files[0], req.body.path, req.body.name);
-    console.log(temp);
-    console.log("hola mundo");
+router.delete("/", async (req, res) => {
+	if (!req?.body?.path) {
+		return res.status(400).json({ error: "No path provided" });
+	}
+	if (!req.body.path.includes(req.folder)) {
+		return res
+			.status(403)
+			.json({ error: "Forbidden: Cannot delete files outside of your folder" });
+	}
+	try {
+		let deleteFilePath = req.body.path.replaceAll(
+			config.PUBLIC_URL,
+			`${config.PRIVATE_URL}/`
+		);
+		let deleteFile = await files.deleteFile(deleteFilePath);
+		if (deleteFile.state == "success") {
+			return res
+				.status(204)
+				.json({ message: "File deleted successfully", path: req.body.path });
+		} else {
+			return res
+				.status(400)
+				.json({ error: "Error deleting file", path: req.body.path });
+		}
+	} catch (error) {
+		console.log(error);
+		return res.status(500).json({ error: "Internal server error" });
+	}
 });
-router.put("/", (req,res) => {
-    console.log("hola mundo")
-});
-router.delete("/", (req,res) => {
-    console.log("hola mundo")
+router.use("*", (req, res) => {
+	res.status(404).json({
+		error: "Ruta no encontrada",
+	});
 });
 
 export default router;

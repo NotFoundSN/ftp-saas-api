@@ -13,7 +13,7 @@ const validation = async (req, res, next) => {
 			const temp = {
 				folder: permission.folder,
 			};
-			req.folder = temp;
+			req.folder = temp.folder;
 			next();
 		} else {
             // No existe el token

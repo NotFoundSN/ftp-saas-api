@@ -14,13 +14,6 @@ app.use("/", mainRoutes);
 
 app.use("*", (req, res) => {
   res.status(404).json({
-    // quiero ver la ruta que se esta llamando
-    method: req.method,
-    // quiero ver la ruta que se esta llamando
-    // req.originalUrl es la url completa que se esta llamando
-    // req.path es la ruta sin el dominio
-    originalUrl: req.originalUrl,
-    path: req.path,
     error: "Ruta no encontrada",
   });
 });

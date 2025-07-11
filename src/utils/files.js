@@ -21,11 +21,10 @@ const uploadFile = async (file, path) => {
 	let newpath = path;
 	if (newpath.length > 0) {
 		if (newpath[0] === "/") {
-			newpath = newpath.substring(1);
+			newpath = newpath.substring(1).replaceAll("//", "/");
 		}
 	}
 	const name = file?.originalname.replaceAll(" ", "_");
-
 	try {
 		let dir = "";
 		// crea la conexion al servidor FTP
@@ -54,25 +53,31 @@ const uploadFile = async (file, path) => {
 	return {
 		state: "success",
 		file: `${file.originalname}`,
-		path: `${url.publicBaseUrl}${newpath}/${name}`,
+		path: `${url.publicBaseUrl}${newpath}/${name}`
+			.replaceAll("//", "/")
+			.replaceAll(":/", "://"),
 	};
 };
 
-const deleteFile = async (idFile, file, type, idActa, userDNI) => {
+const deleteFile = async (path) => {
 	const client = new ftp.Client();
 	try {
 		await client.access({
 			...ftpServer,
 		});
-
-		//await client.remove(`${defaltUrl}/fotos/${file}`);
+		let tryRemove = await client.remove(path);
+		client.close();
+		if (tryRemove.code == 250) {
+			return { state: "success", path: path };
+		} else {
+			return { state: "error", path: path };
+		}
 	} catch (error) {
+		client.close();
 		console.error("Error al borrar archivo");
 		console.error(error);
-		return { state: "error", file: file };
+		return { state: "error", path: path };
 	}
-	client.close();
-	return { state: "success", file: file };
 };
 
 export default { uploadFile, deleteFile };

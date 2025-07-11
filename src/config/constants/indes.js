@@ -10,8 +10,8 @@ const config = {
 	DB_USERNAME: process.env.DB_USERNAME || "user",
 	DB_PASSWORD: process.env.DB_PASSWORD || "password",
 
-	SEQUELIZE_LOGGING: true,
-	SEQUELIZE_RAW_QUERIES: true,
+	SEQUELIZE_LOGGING: process.env.SEQUELIZE_LOGGING == "true" ? true : false,
+	SEQUELIZE_RAW_QUERIES: process.env.SEQUELIZE_RAW_QUERIES == "true" ? true : false,
 
 	FTP_HOST: process.env.FTP_HOST || "localhost",
 	FTP_PORT: process.env.FTP_PORT || 21,
