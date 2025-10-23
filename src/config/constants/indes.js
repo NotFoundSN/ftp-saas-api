@@ -13,6 +13,14 @@ const config = {
 	SEQUELIZE_LOGGING: process.env.SEQUELIZE_LOGGING == "true" ? true : false,
 	SEQUELIZE_RAW_QUERIES: process.env.SEQUELIZE_RAW_QUERIES == "true" ? true : false,
 
+	// Configuración de Cloudflare R2
+	R2_ENDPOINT: process.env.R2_ENDPOINT || "https://<account_id>.r2.cloudflarestorage.com",
+	R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID || "",
+	R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY || "",
+	R2_BUCKET_NAME: process.env.R2_BUCKET_NAME || "",
+	R2_PUBLIC_URL: process.env.R2_PUBLIC_URL || "https://your-bucket.your-account.r2.dev",
+	
+	// Variables heredadas del sistema FTP (para compatibilidad durante migración)
 	FTP_HOST: process.env.FTP_HOST || "localhost",
 	FTP_PORT: process.env.FTP_PORT || 21,
 	FTP_USER: process.env.FTP_USER || "anonymous",
