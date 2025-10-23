@@ -16,9 +16,10 @@ export default (sequelize, DataTypes) => {
     responsible: {
       type: DataTypes.TEXT
     },
-    folder: {
+    prefix: {
       type: DataTypes.STRING(255),
-      allowNull: false
+      allowNull: false,
+      comment: "Folder prefix within the R2 bucket (e.g., 'client1/', 'project-a/')"
     },
     apiKey: {
       type: DataTypes.STRING(255),

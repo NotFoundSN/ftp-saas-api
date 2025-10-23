@@ -10,7 +10,9 @@ const router = Router();
 
 router.get("/", (req, res) => {
 	res.status(200).json({
-		message: "Welcome to the FTP SaaS API",
+		message: "Welcome to the R2 SaaS API - Cloudflare R2 Storage Service",
+		storage: "Cloudflare R2",
+		version: "2.0.0"
 	});
 });
 

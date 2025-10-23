@@ -11,7 +11,7 @@ const validation = async (req, res, next) => {
 		});
 		if (permission) {
 			const temp = {
-				folder: permission.folder,
+				folder: permission.prefix, // Usando prefix para organizar carpetas dentro del bucket
 			};
 			req.folder = temp.folder;
 			next();

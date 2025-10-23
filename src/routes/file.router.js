@@ -21,7 +21,7 @@ router.post("/", async (req, res) => {
 			return res.status(400).json(temp);
 		}
 	} catch (error) {
-		console.log(error);
+		console.error(error);
 		return res.status(500).json({ error: "Internal server error" });
 	}
 });
@@ -32,14 +32,14 @@ router.delete("/", async (req, res) => {
 	if (!req.body.path.includes(req.folder)) {
 		return res
 			.status(403)
-			.json({ error: "Forbidden: Cannot delete files outside of your folder" });
+			.json({ error: "Forbidden: Cannot delete files outside of your assigned folder prefix" });
 	}
 	try {
 		let deleteFilePath = req.body.path.replaceAll(
-			config.PUBLIC_URL,
-			`${config.PRIVATE_URL}/`
+			config.R2_PUBLIC_URL,
+			""
 		);
-		let deleteFile = await files.deleteFile(deleteFilePath);
+		let deleteFile = await files.deleteFile(req.body.path);
 		if (deleteFile.state == "success") {
 			return res
 				.status(204)
@@ -50,7 +50,7 @@ router.delete("/", async (req, res) => {
 				.json({ error: "Error deleting file", path: req.body.path });
 		}
 	} catch (error) {
-		console.log(error);
+		console.error(error);
 		return res.status(500).json({ error: "Internal server error" });
 	}
 });

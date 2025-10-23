@@ -1,82 +1,85 @@
-import stream from "node:stream";
-import ftp from "basic-ftp";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import config from "../config/constants/indes.js";
 
-const ftpServer = {
-	host: config.FTP_HOST,
-	user: config.FTP_USER,
-	password: config.FTP_PASSWORD,
-	port: config.FTP_PORT,
-	secure: false, // o true para FTPS
-	passive: true, // ¡Activa el modo pasivo!
-};
-
-const url = {
-	publicBaseUrl: config.PUBLIC_URL,
-	privateBaseUrl: config.PRIVATE_URL,
-};
+// Configurar cliente de R2 usando la API compatible con S3
+const r2Client = new S3Client({
+	region: "auto", // R2 usa "auto" como región
+	endpoint: config.R2_ENDPOINT,
+	credentials: {
+		accessKeyId: config.R2_ACCESS_KEY_ID,
+		secretAccessKey: config.R2_SECRET_ACCESS_KEY,
+	},
+});
 
 const uploadFile = async (file, path) => {
-	const client = new ftp.Client();
 	let newpath = path;
 	if (newpath.length > 0) {
 		if (newpath[0] === "/") {
 			newpath = newpath.substring(1).replaceAll("//", "/");
 		}
 	}
-	const name = file?.originalname.replaceAll(" ", "_");
+	
+	const fileName = file?.originalname.replaceAll(" ", "_");
+	const key = `${newpath}/${fileName}`.replaceAll("//", "/");
+	
 	try {
-		let dir = "";
-		// crea la conexion al servidor FTP
-		await client.access({
-			...ftpServer,
-		});
-		// crea la carpeta si no existe
-		await client.ensureDir(`${url.privateBaseUrl}/${newpath}`);
-		dir = `${url.privateBaseUrl}/${newpath}`;
+		const uploadParams = {
+			Bucket: config.R2_BUCKET_NAME,
+			Key: key,
+			Body: file?.buffer,
+			ContentType: file?.mimetype || "application/octet-stream",
+		};
 
-		// convierte el archivo en stream
-		const readableStream = stream.Readable.from(file?.buffer);
+		const command = new PutObjectCommand(uploadParams);
+		await r2Client.send(command);
 
-		// sube el archivo al servidor FTP
-		await client.uploadFrom(readableStream, `${dir}/${name}`);
+		// Construir la URL pública del archivo
+		const publicUrl = `${config.R2_PUBLIC_URL}/${key}`.replaceAll("//", "/").replaceAll(":/", "://");
+
+		return {
+			state: "success",
+			file: file.originalname,
+			path: publicUrl,
+		};
 	} catch (error) {
-		console.error("Error al subir archivo");
+		console.error("Error al subir archivo a R2:");
 		console.error(error);
-		client.close();
 		return {
 			state: "error",
-			file: `${file.originalname}`,
+			file: file.originalname,
+			error: error.message,
 		};
 	}
-	client.close();
-	return {
-		state: "success",
-		file: `${file.originalname}`,
-		path: `${url.publicBaseUrl}${newpath}/${name}`
-			.replaceAll("//", "/")
-			.replaceAll(":/", "://"),
-	};
 };
 
 const deleteFile = async (path) => {
-	const client = new ftp.Client();
 	try {
-		await client.access({
-			...ftpServer,
-		});
-		let tryRemove = await client.remove(path);
-		client.close();
-		if (tryRemove.code == 250) {
-			return { state: "success", path: path };
-		} else {
-			return { state: "error", path: path };
+		// Extraer la key del path (remover la URL base)
+		let key = path.replace(config.R2_PUBLIC_URL, "");
+		if (key.startsWith("/")) {
+			key = key.substring(1);
 		}
+
+		const deleteParams = {
+			Bucket: config.R2_BUCKET_NAME,
+			Key: key,
+		};
+
+		const command = new DeleteObjectCommand(deleteParams);
+		await r2Client.send(command);
+
+		return { 
+			state: "success", 
+			path: path 
+		};
 	} catch (error) {
-		client.close();
-		console.error("Error al borrar archivo");
+		console.error("Error al borrar archivo de R2:");
 		console.error(error);
-		return { state: "error", path: path };
+		return { 
+			state: "error", 
+			path: path,
+			error: error.message,
+		};
 	}
 };
 
